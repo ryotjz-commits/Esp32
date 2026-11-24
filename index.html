@@ -1,1 +1,1124 @@
 
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta name="theme-color" content="#0d1319">
+
+  <meta
+    name="description"
+    content="NOVIA HOME Smart Home Control untuk mengontrol dan memantau perangkat rumah berbasis ESP32 dan Blynk IoT."
+  >
+
+  <meta name="application-name" content="NOVIA HOME">
+
+  <!-- PWA / Mobile App -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="black-translucent"
+  >
+  <meta
+    name="apple-mobile-web-app-title"
+    content="NOVIA HOME"
+  >
+
+  <!-- PWA manifest + install icons -->
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="./assets/icon.svg">
+  <link rel="apple-touch-icon" href="./assets/icon-192.png">
+
+  <title>NOVIA HOME | Smart Control</title>
+
+  <!-- Theme: Apply before rendering -->
+  <script>
+    (() => {
+      try {
+        const theme = localStorage.getItem("novia-home-theme") || "light";
+
+        if (theme === "light" || theme === "dark") {
+          document.documentElement.setAttribute("data-theme", theme);
+
+          const themeColor = document.querySelector(
+            'meta[name="theme-color"]'
+          );
+
+          if (themeColor) {
+            themeColor.setAttribute(
+              "content",
+              theme === "light" ? "#f3f6f7" : "#0d1319"
+            );
+          }
+        }
+      } catch (_) {}
+    })();
+  </script>
+
+  <!-- Stylesheets -->
+  <link
+    rel="stylesheet"
+    href="./css/style.css?v=20261122-ui-r8"
+  >
+
+  <link
+    rel="stylesheet"
+    href="./css/automation.css?v=20261122-ui-r8"
+  >
+
+  <link
+    rel="stylesheet"
+    href="./css/refined.css?v=20261122-ui-r8"
+  >
+
+  <link
+    rel="stylesheet"
+    href="./css/connection-mode.css?v=20261122-ui-r8"
+  >
+
+  <!-- Soft Home UI: visual layer, keeps existing controls and IDs -->
+  <link
+    rel="stylesheet"
+    href="./css/ui-refresh.css?v=20261122-ui-r8"
+  >
+
+</head>
+
+<body>
+
+  <div class="app-shell">
+
+    <!-- =====================================
+         TOPBAR
+    ====================================== -->
+
+    <header class="topbar">
+
+      <a
+        class="brand"
+        href="./"
+        aria-label="NOVIA HOME Dashboard"
+      >
+        <span class="brand-mark" aria-hidden="true">N</span>
+
+        <span>
+          <strong>NOVIA HOME</strong>
+          <small>SMART CONTROL</small>
+        </span>
+      </a>
+
+      <div
+        class="demo-pill"
+        role="status"
+        aria-live="polite"
+      >
+        <span class="pulse" aria-hidden="true"></span>
+
+        <span id="connectionStatus">
+          MENGHUBUNGKAN...
+        </span>
+      </div>
+
+      <!-- Theme Switcher ditambahkan otomatis oleh app.js -->
+
+    </header>
+
+
+    <!-- =====================================
+         MAIN CONTENT
+    ====================================== -->
+
+    <main id="main-content">
+
+      <!-- WELCOME SECTION -->
+
+      <section class="welcome">
+
+        <small class="hero-location" id="deviceLocation" role="status" aria-live="polite">
+          <span class="location-pin" aria-hidden="true">⌖</span> Mencari lokasi...
+        </small>
+
+        <div>
+          <p class="eyebrow">NOVIA HOME • SMART LIVING</p>
+
+          <h1>
+            Rumahku
+          </h1>
+          <p class="welcome-copy">Semua perangkat rumah dalam satu kendali.</p>
+        </div>
+
+        <div class="hero-chip">
+
+          <span class="chip-icon" aria-hidden="true">⌂</span>
+
+          <span>
+            <b>ESP32</b>
+            <small>CONTROLLER</small>
+          </span>
+
+        </div>
+
+      </section>
+
+
+      <!-- =====================================
+           MAIN NAVIGATION TABS
+      ====================================== -->
+
+      <nav
+        class="main-tabs"
+        role="tablist"
+        aria-label="Navigasi dashboard"
+      >
+        <button
+          class="main-tab is-active"
+          id="tabControl"
+          type="button"
+          role="tab"
+          aria-selected="true"
+          aria-controls="panelControl"
+          data-tab="panelControl"
+        >
+          <span aria-hidden="true">⌂</span>
+          Beranda
+        </button>
+        <button
+          class="main-tab"
+          id="tabDevices"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panelDevices"
+          data-tab="panelDevices"
+        >
+          <span aria-hidden="true">⌘</span>
+          Perangkat
+        </button>
+        <button
+          class="main-tab"
+          id="tabAutomation"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panelAutomation"
+          data-tab="panelAutomation"
+        >
+          <span aria-hidden="true">▦</span>
+          Jadwal
+        </button>
+        <button
+          class="main-tab"
+          id="tabMonitor"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panelMonitor"
+          data-tab="panelMonitor"
+        >
+          <span aria-hidden="true">♙</span>
+          Sistem
+        </button>
+      </nav>
+
+
+      <!-- =====================================
+           DEVICE ACCESS PANEL
+      ====================================== -->
+
+      <div
+        class="tab-panel"
+        id="panelDevices"
+        role="tabpanel"
+        aria-labelledby="tabDevices"
+        hidden
+      >
+
+      <!-- =====================================
+           LOCAL CONNECTION SELECTOR
+           MODE AP / MODE ROUTER
+      ====================================== -->
+
+      <section
+        class="connection-mode"
+        aria-labelledby="connectionModeTitle"
+      >
+
+        <div class="connection-mode-heading">
+
+          <p class="eyebrow">KONEKSI LOKAL</p>
+
+          <h2 id="connectionModeTitle">
+            Pilih akses perangkat
+          </h2>
+
+          <p>
+            Pilih jalur sesuai jaringan yang digunakan.
+            Mode AP dipakai saat HP terhubung langsung ke Wi-Fi ESP32;
+            Mode Router dipakai saat HP dan ESP32 berada di Wi-Fi rumah.
+          </p>
+
+        </div>
+
+        <div class="connection-mode-actions">
+
+          <!-- MODE AP -->
+
+          <button
+            type="button"
+            class="connection-mode-card"
+            id="openApMode"
+          >
+
+            <span
+              class="connection-mode-icon"
+              aria-hidden="true"
+            >⌁</span>
+
+            <strong>MODE AP</strong>
+
+            <span>HP terhubung ke Wi-Fi NOVIA HOME</span>
+
+            <small>Alamat lokal: 192.168.4.1</small>
+
+          </button>
+
+
+          <!-- MODE ROUTER -->
+
+          <div class="connection-mode-card router-card">
+
+            <span
+              class="connection-mode-icon"
+              aria-hidden="true"
+            >⌘</span>
+
+            <strong>MODE ROUTER</strong>
+
+            <span>HP dan ESP32 pada router yang sama</span>
+
+            <label for="routerDeviceIp">
+              IP ESP32
+            </label>
+
+            <input
+              id="routerDeviceIp"
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              placeholder="Contoh: 192.168.1.25"
+              maxlength="15"
+            >
+
+            <button
+              type="button"
+              class="connection-open-router"
+              id="openRouterMode"
+            >
+              BUKA DASHBOARD LOKAL
+            </button>
+
+          </div>
+
+        </div>
+
+        <p
+          class="connection-mode-note"
+          id="connectionModeNote"
+          role="status"
+        >
+          Tips: jika memakai Mode AP, sambungkan HP ke Wi-Fi ESP32 terlebih dahulu.
+          Untuk Mode Router, masukkan alamat IPv4 ESP32 yang terlihat di router
+          atau Serial Monitor. Koneksi internet tidak selalu diperlukan untuk akses lokal.
+        </p>
+
+      </section>
+
+
+      </div>
+
+
+      <!-- =====================================
+           MONITORING PANEL
+      ====================================== -->
+
+      <div
+        class="tab-panel"
+        id="panelMonitor"
+        role="tabpanel"
+        aria-labelledby="tabMonitor"
+        hidden
+      >
+
+        <!-- SYSTEM SUMMARY -->
+
+        <section
+          class="summary-grid"
+          aria-label="Ringkasan sistem"
+        >
+
+          <article class="summary-card">
+
+            <span class="summary-icon" aria-hidden="true">
+              ⌁
+            </span>
+
+            <div>
+              <small>JARINGAN</small>
+
+              <strong>Memeriksa koneksi...</strong>
+
+              <span class="summary-note">
+                Menunggu respons API
+              </span>
+            </div>
+
+          </article>
+
+
+          <article class="summary-card">
+
+            <span class="summary-icon" aria-hidden="true">
+              ▣
+            </span>
+
+            <div>
+              <small>PERANGKAT</small>
+
+              <strong>Memeriksa perangkat...</strong>
+
+              <span class="summary-note">
+                ESP32 · 4 channel
+              </span>
+            </div>
+
+          </article>
+
+        </section>
+
+
+        <!-- RELIABILITY MONITOR -->
+
+        <section
+          class="section-block reliability-panel"
+          aria-labelledby="reliabilityTitle"
+        >
+
+          <div class="section-heading">
+
+            <div>
+              <p class="eyebrow">STATUS SISTEM</p>
+              <h2 id="reliabilityTitle">Kondisi sistem</h2>
+            </div>
+
+            <button
+              type="button"
+              class="monitor-refresh"
+              id="refreshStatus"
+              aria-label="Perbarui status koneksi"
+            >
+              ↻ <span>PERBARUI</span>
+            </button>
+
+          </div>
+
+
+          <div class="health-grid">
+
+            <article
+              class="health-item"
+              id="browserHealth"
+              data-health="checking"
+            >
+              <span class="health-dot" aria-hidden="true"></span>
+
+              <div>
+                <small>JARINGAN HP / BROWSER</small>
+                <strong id="browserHealthText">
+                  Memeriksa...
+                </strong>
+              </div>
+            </article>
+
+
+            <article
+              class="health-item"
+              id="deviceHealth"
+              data-health="checking"
+            >
+              <span class="health-dot" aria-hidden="true"></span>
+
+              <div>
+                <small>ESP32 · STATUS PERANGKAT</small>
+                <strong id="deviceHealthText">
+                  Memeriksa perangkat...
+                </strong>
+              </div>
+            </article>
+
+
+            <article
+              class="health-item"
+              id="apiHealth"
+              data-health="checking"
+            >
+              <span class="health-dot" aria-hidden="true"></span>
+
+              <div>
+                <small>CLOUD API · BLYNK</small>
+                <strong id="apiHealthText">
+                  Memeriksa...
+                </strong>
+              </div>
+            </article>
+
+          </div>
+
+
+          <!-- HEALTH METADATA -->
+
+          <div class="health-meta">
+
+            <div>
+              <span>Sinkronisasi terakhir</span>
+              <strong id="lastSyncText">
+                Belum tersedia
+              </strong>
+            </div>
+
+            <div>
+              <span>Waktu respons</span>
+              <strong id="latencyText">--</strong>
+            </div>
+
+            <div>
+              <span>Kegagalan beruntun</span>
+              <strong id="failureCountText">0</strong>
+            </div>
+
+            <div>
+              <span>Terakhir ESP32 online</span>
+              <strong id="deviceLastSeenText">
+                Belum tersedia
+              </strong>
+            </div>
+
+          </div>
+
+
+          <p
+            class="health-footnote"
+            id="deviceHealthNote"
+          >
+            Status ESP32 diperiksa melalui Blynk Cloud. Status API menunjukkan
+            apakah layanan dashboard dapat dijangkau, sedangkan status ESP32
+            menunjukkan apakah perangkat terdeteksi online oleh Blynk.
+          </p>
+
+          <div class="info-note" aria-label="Panduan membaca monitoring">
+            <strong>Cara membaca status</strong>
+            <ul>
+              <li><b>Browser:</b> koneksi jaringan pada HP atau browser.</li>
+              <li><b>Cloud API:</b> jalur komunikasi dashboard ke layanan NOVIA HOME.</li>
+              <li><b>ESP32:</b> status perangkat menurut Blynk Cloud, bukan pemeriksaan relay secara fisik.</li>
+              <li><b>Waktu respons:</b> durasi permintaan status API, bukan waktu respons relay.</li>
+            </ul>
+          </div>
+
+        </section>
+
+
+        <!-- CONNECTION HISTORY -->
+
+        <section
+          class="section-block reliability-history"
+          aria-labelledby="historyTitle"
+        >
+
+          <div class="section-heading">
+
+            <div>
+              <p class="eyebrow">AKTIVITAS</p>
+              <h2 id="historyTitle">Riwayat koneksi</h2>
+            </div>
+
+            <button
+              type="button"
+              class="history-clear"
+              id="clearConnectionHistory"
+            >
+              HAPUS
+            </button>
+
+          </div>
+
+
+          <div
+            class="history-summary"
+            aria-live="polite"
+          >
+            <span id="historyCount">
+              0 kejadian tersimpan
+            </span>
+
+            <span id="historyStorageState">
+              Penyimpanan lokal
+            </span>
+          </div>
+
+
+          <ol
+            class="connection-history-list"
+            id="connectionHistoryList"
+            aria-live="polite"
+          >
+            <li class="history-empty">
+              Belum ada riwayat koneksi.
+            </li>
+          </ol>
+
+        </section>
+
+
+        <!-- SYSTEM INFORMATION -->
+
+        <section class="section-block system-panel">
+
+          <p class="eyebrow">INFORMASI</p>
+
+          <h2>Detail sistem</h2>
+
+          <div class="system-list">
+
+            <div>
+              <span>Platform</span>
+              <strong>SMART HOME V4</strong>
+            </div>
+
+            <div>
+              <span>Controller</span>
+              <strong>ESP32 DevKit V1</strong>
+            </div>
+
+            <div>
+              <span>Komunikasi</span>
+              <strong>Blynk IoT</strong>
+            </div>
+
+            <div>
+              <span>Hosting dashboard</span>
+              <strong>GitHub Pages</strong>
+            </div>
+
+            <div>
+              <span>Status integrasi</span>
+              <strong class="pending">
+                Memeriksa koneksi...
+              </strong>
+            </div>
+
+          </div>
+
+        </section>
+
+      </div>
+
+
+      <!-- =====================================
+           CONTROL PANEL
+      ====================================== -->
+
+      <div
+        class="tab-panel is-active"
+        id="panelControl"
+        role="tabpanel"
+        aria-labelledby="tabControl"
+      >
+
+        <section class="section-block">
+
+          <div class="section-heading">
+
+            <div>
+              <p class="eyebrow">KONTROL RUANGAN</p>
+              <h2>Perangkat</h2>
+            </div>
+
+            <span class="count-label">
+              4 PERANGKAT
+            </span>
+
+          </div>
+
+
+          <div class="device-grid">
+
+            <!-- CHANNEL 01 -->
+
+            <article
+              class="device-card"
+              data-channel="0"
+            >
+
+              <div class="device-card-head">
+
+                <span class="device-icon" aria-hidden="true">
+                  <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 8h20l7 17H7L14 8Z"/><path d="M18 25v5m12-5v5M20 30h8v8a4 4 0 0 1-8 0v-8Z"/><path d="M21 35h6"/></svg>
+                </span>
+
+                <span class="state-badge">
+                  MENUNGGU
+                </span>
+
+              </div>
+
+              <h3>Lampu Depan</h3>
+
+              <p>VIRTUAL PIN 0</p>
+              <p>GPIO 23</p>
+
+              <button
+                type="button"
+                class="toggle-button"
+                aria-pressed="false"
+                aria-label="Kontrol Lampu Depan"
+              >
+                <span
+                  class="toggle-knob"
+                  aria-hidden="true"
+                ></span>
+
+                <span class="toggle-label">
+                  MENUNGGU...
+                </span>
+              </button>
+
+            </article>
+
+
+            <!-- CHANNEL 02 -->
+
+            <article
+              class="device-card"
+              data-channel="1"
+            >
+
+              <div class="device-card-head">
+
+                <span class="device-icon" aria-hidden="true">
+                  <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M15 23a9 9 0 1 1 18 0c0 5-4 7-5 11H20c-1-4-5-6-5-11Z"/><path d="M20 38h8m-7 4h6M24 8v3M10 23h3m22 0h3"/></svg>
+                </span>
+
+                <span class="state-badge">
+                  MENUNGGU
+                </span>
+
+              </div>
+
+              <h3>Lampu Tengah</h3>
+
+              <p>VIRTUAL PIN 1</p>
+              <p>GPIO 22</p>
+
+              <button
+                type="button"
+                class="toggle-button"
+                aria-pressed="false"
+                aria-label="Kontrol Lampu Tengah"
+              >
+                <span
+                  class="toggle-knob"
+                  aria-hidden="true"
+                ></span>
+
+                <span class="toggle-label">
+                  MENUNGGU...
+                </span>
+              </button>
+
+            </article>
+
+
+            <!-- CHANNEL 03 -->
+
+            <article
+              class="device-card"
+              data-channel="2"
+            >
+
+              <div class="device-card-head">
+
+                <span class="device-icon" aria-hidden="true">
+                  <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M13 9h22l7 20H6l7-20Z"/><path d="M24 29v7m-8 4h16m-13-4h10"/></svg>
+                </span>
+
+                <span class="state-badge">
+                  MENUNGGU
+                </span>
+
+              </div>
+
+              <h3>Lampu Kamar</h3>
+
+              <p>VIRTUAL PIN 2</p>
+              <p>GPIO 21</p>
+
+              <button
+                type="button"
+                class="toggle-button"
+                aria-pressed="false"
+                aria-label="Kontrol Lampu Kamar"
+              >
+                <span
+                  class="toggle-knob"
+                  aria-hidden="true"
+                ></span>
+
+                <span class="toggle-label">
+                  MENUNGGU...
+                </span>
+              </button>
+
+            </article>
+
+
+            <!-- CHANNEL 04 -->
+
+            <article
+              class="device-card"
+              data-channel="3"
+            >
+
+              <div class="device-card-head">
+
+                <span class="device-icon" aria-hidden="true">
+                  <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="19"/><circle cx="24" cy="24" r="3"/><path d="M24 21c-5-9-2-13 3-12 5 1 4 7-3 12Zm3 3c10-2 13 2 10 6-3 4-8 1-10-6Zm-5 2c-5 9-10 9-12 4-2-5 4-8 12-4Z"/></svg>
+                </span>
+
+                <span class="state-badge">
+                  MENUNGGU
+                </span>
+
+              </div>
+
+              <h3>Kipas Angin</h3>
+
+              <p>VIRTUAL PIN 3</p>
+              <p>GPIO 19</p>
+
+              <button
+                type="button"
+                class="toggle-button"
+                aria-pressed="false"
+                aria-label="Kontrol Kipas Angin"
+              >
+                <span
+                  class="toggle-knob"
+                  aria-hidden="true"
+                ></span>
+
+                <span class="toggle-label">
+                  MENUNGGU...
+                </span>
+              </button>
+
+            </article>
+
+          </div>
+
+
+          <p
+            class="demo-note"
+            role="status"
+            aria-live="polite"
+          >
+            Menghubungkan dashboard dengan Blynk IoT...
+          </p>
+          <p class="info-note">
+            Tekan saklar untuk mengirim perintah ON/OFF. Perubahan akan ditampilkan
+            setelah status terbaru berhasil dibaca kembali dari API. Jika koneksi
+            terputus, kontrol dinonaktifkan untuk mencegah perintah yang tidak terkonfirmasi.
+          </p>
+
+        </section>
+
+      </div>
+
+
+      <!-- =====================================
+           AUTOMATION PANEL
+      ====================================== -->
+
+      <div
+        class="tab-panel"
+        id="panelAutomation"
+        role="tabpanel"
+        aria-labelledby="tabAutomation"
+        hidden
+      >
+
+        <section
+          class="section-block automation-panel"
+          id="automation"
+        >
+
+          <div class="section-heading">
+
+            <div>
+              <p class="eyebrow">OTOMASI</p>
+              <h2>Pengaturan otomatis</h2>
+            </div>
+
+          </div>
+
+
+          <!-- TIMER AUTOMATIC -->
+
+          <article class="automation-card">
+
+            <div class="automation-heading">
+
+              <span class="automation-icon">◷</span>
+
+              <div>
+                <h3>Timer otomatis</h3>
+                <p>
+                  Matikan perangkat setelah durasi tertentu
+                </p>
+              </div>
+
+            </div>
+
+
+            <label for="timerChannel">
+              Pilih perangkat
+            </label>
+
+            <select id="timerChannel">
+              <option value="0">Lampu Depan · V0</option>
+              <option value="1">Lampu Tengah · V1</option>
+              <option value="2">Lampu Kamar · V2</option>
+              <option value="3">Kipas Angin · V3</option>
+            </select>
+
+
+            <label for="timerMinutes">
+              Durasi timer
+            </label>
+
+            <select id="timerMinutes">
+              <option value="15">15 menit</option>
+              <option value="30">30 menit</option>
+              <option value="60" selected>1 jam</option>
+              <option value="120">2 jam</option>
+              <option value="180">3 jam</option>
+              <option value="240">4 jam</option>
+              <option value="480">8 jam</option>
+            </select>
+
+
+            <button
+              type="button"
+              id="startTimer"
+              class="automation-button"
+            >
+              AKTIFKAN TIMER
+            </button>
+
+            <button
+              type="button"
+              id="cancelTimer"
+              class="automation-button secondary"
+            >
+              BATALKAN TIMER
+            </button>
+
+
+            <!-- LIVE TIMER COUNTDOWN -->
+            
+
+<div id="timerCountdown" class="timer-countdown" hidden>
+
+  <div class="timer-countdown-header">
+    <span>SISA WAKTU</span>
+    <span id="timerCountdownBadge">AKTIF</span>
+  </div>
+
+  <div id="timerCountdownValue"
+       class="timer-countdown-value">
+    00:00
+  </div>
+
+  <div class="timer-progress-track">
+    <div id="timerProgressBar"
+         class="timer-progress-bar">
+    </div>
+  </div>
+
+  <div class="timer-countdown-footer">
+    <span id="timerDeviceName">Perangkat</span>
+    <span id="timerRemainingLabel">
+      Timer berjalan
+    </span>
+  </div>
+
+</div>
+
+    <p id="timerStatus" class="automation-status" role="status">
+      Belum ada timer yang diatur.
+    </p>
+
+  </article>
+
+  <!-- DAILY SCHEDULE -->
+  <article class="automation-card">
+
+    <div class="automation-heading">
+      <span class="automation-icon">◷</span>
+      <div>
+        <h3>Jadwal harian</h3>
+        <p>Atur jam ON/OFF dan hari berlakunya jadwal</p>
+      </div>
+    </div>
+
+    <label for="scheduleChannel">Pilih perangkat</label>
+
+    <select id="scheduleChannel">
+      <option value="0">Lampu Depan · V0</option>
+      <option value="1">Lampu Tengah · V1</option>
+      <option value="2">Lampu Kamar · V2</option>
+      <option value="3">Kipas Angin · V3</option>
+    </select>
+
+    <div class="schedule-time-grid">
+
+      <div>
+        <label for="scheduleOn">Waktu ON</label>
+        <input type="time" id="scheduleOn" value="18:00">
+      </div>
+
+      <div>
+        <label for="scheduleOff">Waktu OFF</label>
+        <input type="time" id="scheduleOff" value="22:00">
+      </div>
+
+    </div>
+
+    <p class="info-note">
+      Pilih minimal satu hari. Jadwal yang sama akan berulang pada hari terpilih.
+      Pastikan waktu perangkat dan layanan otomasi mengikuti zona waktu yang benar.
+    </p>
+
+    <label>Hari aktif</label>
+
+    <div class="weekday-grid">
+
+      <label><input type="checkbox" value="1" checked> Sen</label>
+      <label><input type="checkbox" value="2" checked> Sel</label>
+      <label><input type="checkbox" value="4" checked> Rab</label>
+      <label><input type="checkbox" value="8" checked> Kam</label>
+      <label><input type="checkbox" value="16" checked> Jum</label>
+      <label><input type="checkbox" value="32" checked> Sab</label>
+      <label><input type="checkbox" value="64" checked> Min</label>
+
+    </div>
+
+    <label class="schedule-enable">
+      <input type="checkbox" id="scheduleEnabled" checked>
+      Aktifkan jadwal
+    </label>
+
+    <button type="button" id="saveSchedule" class="automation-button">
+      SIMPAN JADWAL
+    </button>
+
+    <p id="scheduleStatus" class="automation-status" role="status">
+      Jadwal belum disimpan.
+    </p>
+
+  </article>
+
+  <!-- SAVED SCHEDULES -->
+  <article class="automation-card">
+
+    <div class="automation-heading">
+      <span class="automation-icon">▤</span>
+      <div>
+        <h3>Jadwal tersimpan</h3>
+        <p>Daftar aturan yang sudah tersimpan pada layanan NOVIA HOME.</p>
+        
+      </div>
+    </div>
+
+    <div id="scheduleList" class="schedule-list">
+      Memuat daftar jadwal...
+    </div>
+
+  </article>
+
+</section>
+
+
+    </div>
+
+  </main>
+
+
+  <!-- =========================================
+       FOOTER
+  ========================================== -->
+
+  <footer>
+    <span>NOVIA HOME</span>
+    <span>ESP32 · BLYNK IoT</span>
+  </footer>
+
+</div>
+
+
+<!-- =========================================
+     APPLICATION JAVASCRIPT
+========================================== -->
+
+<script src="./js/app.js?v=20261122-ui-r8"></script>
+  <script src="./js/automation.js?v=20261122-ui-r8"></script>
+
+
+<!-- =========================================
+     PWA SERVICE WORKER
+========================================== -->
+
+<script>
+
+if ("serviceWorker" in navigator) {
+
+  window.addEventListener("load", () => {
+
+    navigator.serviceWorker
+      .register("./sw.js")
+      .catch(error => {
+
+        console.error(
+          "NOVIA HOME PWA registration failed:",
+          error
+        );
+
+      });
+
+  });
+
+}
+
+</script>
+
+<script src="./js/connection-mode.js?v=20261122-ui-r8"></script>
+</body>
+</html>
+
+    
